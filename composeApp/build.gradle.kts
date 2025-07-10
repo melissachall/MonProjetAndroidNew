@@ -9,7 +9,7 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    //alias(libs.plugins.androidApplication)
+    // alias(libs.plugins.androidApplication) // déjà activé avec id plus bas
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.buildkonfig)
@@ -19,21 +19,20 @@ plugins {
 
 kotlin {
     @OptIn(ExperimentalWasmDsl::class)
-    wasmJs {
+    /*wasmJs {
         moduleName = "composeApp"
         browser {
             commonWebpackConfig {
                 outputFileName = "composeApp.js"
                 devServer = (devServer ?: KotlinWebpackConfig.DevServer()).apply {
                     static = (static ?: mutableListOf()).apply {
-                        // Serve sources to debug inside browser
                         add(project.projectDir.path)
                     }
                 }
             }
         }
         binaries.executable()
-    }
+    }*/
 
     androidTarget {
         compilations.all {
@@ -42,10 +41,11 @@ kotlin {
             }
         }
     }
-    
-    jvm("desktop")
-    
-    listOf(
+
+    // Desktop désactivé pour éviter les erreurs
+    // jvm("desktop")
+
+    /*listOf(
         iosX64(),
         iosArm64(),
         iosSimulatorArm64()
@@ -54,10 +54,9 @@ kotlin {
             baseName = "ComposeApp"
             isStatic = true
         }
-    }
-    
+    }*/
+
     sourceSets {
-        val desktopMain by getting
 
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -80,11 +79,16 @@ kotlin {
             api(libs.generativeai)
             implementation(libs.filekit.compose)
         }
+
+        // Desktop désactivé
+        /*
+        val desktopMain by getting
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             runtimeOnly(libs.kotlinx.coroutines.swing)
             implementation(libs.ktor.client.okhttp)
         }
+        */
 
         commonTest.dependencies {
             implementation(kotlin("test"))
@@ -94,21 +98,24 @@ kotlin {
 
         androidMain.dependencies {
             implementation(platform("com.google.firebase:firebase-bom:33.16.0"))
+            implementation("com.google.firebase:firebase-auth")
             implementation("com.google.firebase:firebase-auth-ktx")
+            implementation("com.google.firebase:firebase-common")
+            implementation("com.google.firebase:firebase-firestore")
+            implementation("com.google.firebase:firebase-firestore-ktx")
+
             implementation(compose.uiTooling)
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.ktor.client.okhttp)
         }
 
-        jvmMain.dependencies {
-            implementation(compose.desktop.currentOs)
-            implementation(libs.ktor.client.okhttp)
-            runtimeOnly(libs.kotlinx.coroutines.swing)
-        }
+        // iOS dépendances si besoin
+        /*
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
         }
+        */
     }
 }
 
@@ -148,10 +155,11 @@ android {
     dependencies {
         debugImplementation(compose.uiTooling)
         implementation(platform("com.google.firebase:firebase-bom:33.16.0"))
-
     }
 }
 
+// Desktop désactivé
+/*
 compose.desktop {
     application {
         mainClass = "MainKt"
@@ -163,6 +171,7 @@ compose.desktop {
         }
     }
 }
+*/
 
 buildkonfig {
     packageName = "com.travel.buddy"
@@ -183,5 +192,4 @@ buildkonfig {
             localProperties["gemini_api_key"]?.toString() ?: ""
         )
     }
-
 }

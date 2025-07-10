@@ -26,6 +26,9 @@ import theme.PrimaryColor
 import theme.TextColor
 import theme.White
 import theme.SecondTextColor
+import data.getAuthRepository
+import data.FirebaseUtils
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 object RegisterScreen : Screen {
@@ -39,16 +42,25 @@ object RegisterScreen : Screen {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreenView(navigator: Navigator) {
-    var fullName by remember { mutableStateOf("") }
+    var firstName by remember { mutableStateOf("") }
+    var familyName by remember { mutableStateOf("") }
     var phoneNumber by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    val phonePattern = Regex("^0\\d{9}$")
+    val emailPattern = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
+    val isEmailValid = emailPattern.matches(email)
+    val phonePattern = Regex("^[567]\\d{8}$")
     val isPhoneValid = phonePattern.matches(phoneNumber)
     val isPasswordMatching = password == confirmPassword && password.isNotEmpty()
+
+    val coroutineScope = rememberCoroutineScope()
+    val authRepository = getAuthRepository()
 
     Column(
         modifier = Modifier
@@ -67,47 +79,51 @@ fun RegisterScreenView(navigator: Navigator) {
                 Icon(
                     painter = painterResource(Res.drawable.arrow_left),
                     contentDescription = "Back",
-                    modifier = Modifier.size(24.dp),
+                    modifier = Modifier.size(36.dp),
                     tint = TextColor
                 )
             }
             Button(
                 onClick = { /* Change language */ },
                 colors = ButtonDefaults.buttonColors(White),
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(18.dp),
                 border = ButtonDefaults.outlinedButtonBorder
             ) {
                 Text("English", color = PrimaryColor)
             }
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
-
         Image(
             painter = painterResource(Res.drawable.logofonce),
             contentDescription = "Logo",
-            modifier = Modifier.size(180.dp)
+            modifier = Modifier
+                .fillMaxWidth(0.5f)
+                .height(100.dp)
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
-
         TextFieldWithLabel(
-            label = "Full Name",
-            value = fullName,
-            onValueChange = { fullName = it },
-            placeholder = "John Doe"
+            label = "First Name",
+            value = firstName,
+            onValueChange = { firstName = it },
+            placeholder = "Melissa"
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(18.dp))
 
         TextFieldWithLabel(
-            label = "Enter your mobile number",
+            label = "Family Name",
+            value = familyName,
+            onValueChange = { familyName = it },
+            placeholder = "CHALLAM"
+        )
+
+        Spacer(modifier = Modifier.height(18.dp))
+
+        TextFieldWithLabel(
+            label = "Phone Number",
             value = phoneNumber,
             onValueChange = { phoneNumber = it },
-            placeholder = "0712345678",
-            leading = {
-                Text("+213 ▼", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextColor)
-            },
+            placeholder = "5XXXXXXXX",
             trailing = {
                 Icon(
                     painter = painterResource(
@@ -121,7 +137,27 @@ fun RegisterScreenView(navigator: Navigator) {
             isError = !isPhoneValid && phoneNumber.isNotEmpty()
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(18.dp))
+
+        TextFieldWithLabel(
+            label = "Enter your email",
+            value = email,
+            onValueChange = { email = it },
+            placeholder = "example@email.com",
+            trailing = {
+                Icon(
+                    painter = painterResource(
+                        if (isEmailValid) Res.drawable.check else Res.drawable.check_before
+                    ),
+                    contentDescription = null,
+                    tint = if (isEmailValid) PrimaryColor else SecondTextColor,
+                    modifier = Modifier.size(24.dp)
+                )
+            },
+            isError = !isEmailValid && email.isNotEmpty()
+        )
+
+        Spacer(modifier = Modifier.height(18.dp))
 
         PasswordFieldWithLabel(
             label = "Enter your password",
@@ -131,7 +167,7 @@ fun RegisterScreenView(navigator: Navigator) {
             onVisibilityChange = { passwordVisible = it }
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(18.dp))
 
         PasswordFieldWithLabel(
             label = "Confirm Password",
@@ -141,21 +177,62 @@ fun RegisterScreenView(navigator: Navigator) {
             onVisibilityChange = { confirmPasswordVisible = it }
         )
 
+        if (errorMessage != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = errorMessage ?: "",
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.align(Alignment.Start)
+            )
+        }
+
         Spacer(modifier = Modifier.height(30.dp))
 
         Button(
             onClick = {
-                navigator.push(OTPScreen("dummy_otp"))
+                if (firstName.isNotEmpty() && familyName.isNotEmpty() && isPhoneValid && isEmailValid && isPasswordMatching && !isLoading) {
+                    isLoading = true
+                    errorMessage = null
+                    coroutineScope.launch {
+                        val result = authRepository.signUpWithEmail(email, password)
+                        isLoading = false
+                        if (result.isSuccess) {
+                            val uid = result.getOrNull()
+                            uid?.let { userId ->
+                                val cleanedPhoneNumber = if (phoneNumber.startsWith("0")) phoneNumber.drop(1) else phoneNumber
+
+                                FirebaseUtils.createUserInFirestore(
+                                    uid = userId,
+                                    firstName = firstName,
+                                    lastName = familyName,
+                                    phoneNumber = cleanedPhoneNumber,
+                                    email = email,
+                                    onSuccess = { navigator.push(LoginScreenMail) },
+                                    onFailure = { e -> errorMessage = "Erreur enregistrement Firestore : ${e.message}" }
+                                )
+                            }
+                        } else {
+                            errorMessage = result.exceptionOrNull()?.message ?: "Erreur d'inscription"
+                        }
+                    }
+                }
             },
-            enabled = fullName.isNotEmpty() && isPhoneValid && isPasswordMatching,
+            enabled = firstName.isNotEmpty() && familyName.isNotEmpty() && isPhoneValid && isEmailValid && isPasswordMatching && !isLoading,
             modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(PrimaryColor),
             shape = RoundedCornerShape(12.dp)
         ) {
-            Text("Register", color = White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            if (isLoading) {
+                CircularProgressIndicator(color = White, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Inscription...", color = White)
+            } else {
+                Text("Register", color = White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         Row {
             Text("Already have an account?", fontSize = 14.sp, color = SecondTextColor)
@@ -171,6 +248,7 @@ fun RegisterScreenView(navigator: Navigator) {
         Spacer(modifier = Modifier.height(30.dp))
     }
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TextFieldWithLabel(
@@ -178,22 +256,32 @@ fun TextFieldWithLabel(
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String,
-    leading: @Composable (() -> Unit)? = null,
     trailing: @Composable (() -> Unit)? = null,
     isError: Boolean = false
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text(label, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextColor)
-        Spacer(modifier = Modifier.height(8.dp))
+        Text(label, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextColor)
+        Spacer(modifier = Modifier.height(6.dp))
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
-            modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text(placeholder, color = SecondTextColor) },
-            leadingIcon = leading,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(46.dp),
+            placeholder = {
+                Text(
+                    placeholder,
+                    color = SecondTextColor,
+                    fontSize = 12.sp
+                )
+            },
+            textStyle = LocalTextStyle.current.copy(
+                fontSize = 13.sp,
+                lineHeight = 14.sp
+            ),
             trailingIcon = trailing,
             isError = isError,
-            shape = RoundedCornerShape(14.dp),
+            shape = RoundedCornerShape(12.dp),
             colors = TextFieldDefaults.outlinedTextFieldColors(
                 focusedBorderColor = PrimaryColor,
                 unfocusedBorderColor = SecondTextColor.copy(alpha = 0.5f),
@@ -215,13 +303,25 @@ fun PasswordFieldWithLabel(
     onVisibilityChange: (Boolean) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text(label, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextColor)
-        Spacer(modifier = Modifier.height(8.dp))
+        Text(label, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextColor)
+        Spacer(modifier = Modifier.height(6.dp))
         OutlinedTextField(
             value = password,
             onValueChange = onPasswordChange,
-            modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("**************", color = SecondTextColor) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(46.dp),
+            placeholder = {
+                Text(
+                    "**************",
+                    color = SecondTextColor,
+                    fontSize = 12.sp
+                )
+            },
+            textStyle = LocalTextStyle.current.copy(
+                fontSize = 13.sp,
+                lineHeight = 14.sp
+            ),
             visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = {
                 IconButton(onClick = { onVisibilityChange(!visible) }) {
@@ -231,11 +331,11 @@ fun PasswordFieldWithLabel(
                         ),
                         contentDescription = "Toggle Password",
                         tint = PrimaryColor,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             },
-            shape = RoundedCornerShape(14.dp),
+            shape = RoundedCornerShape(12.dp),
             colors = TextFieldDefaults.outlinedTextFieldColors(
                 focusedBorderColor = PrimaryColor,
                 unfocusedBorderColor = SecondTextColor.copy(alpha = 0.5f),

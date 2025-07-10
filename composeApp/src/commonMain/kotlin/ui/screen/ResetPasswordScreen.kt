@@ -1,7 +1,6 @@
+// In: composeApp/src/commonMain/kotlin/ui/screen/ResetPasswordScreen.kt
 package ui.screen
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -19,152 +18,81 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import data.AuthRepository // We will create this interface
+import data.getAuthRepository // We will create this factory function
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
+import theme.*
 import travelbuddy.composeapp.generated.resources.*
-import theme.PrimaryColor
-import theme.TextColor
-import theme.White
-import theme.SecondTextColor
 
-@OptIn(ExperimentalMaterial3Api::class)
-object ResetPasswordScreen : Screen {
+// Step 1: Modify the Screen class to accept the reset code
+data class ResetPasswordScreen(val oobCode: String) : Screen {
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
-        ResetPasswordScreenView(navigator = navigator)
+        // Pass the code and the repository to the view
+        ResetPasswordScreenView(
+            navigator = navigator,
+            oobCode = oobCode,
+            authRepository = getAuthRepository()
+        )
     }
 }
 
+// Step 2: Implement the full view with logic
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ResetPasswordScreenView(navigator: Navigator) {
+fun ResetPasswordScreenView(
+    navigator: Navigator,
+    oobCode: String,
+    authRepository: AuthRepository
+) {
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
-    var confirmPasswordVisible by remember { mutableStateOf(false) }
+    var isPasswordVisible by remember { mutableStateOf(false) }
+    var isConfirmPasswordVisible by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var isLoading by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
-    val isMatching = newPassword == confirmPassword && newPassword.isNotEmpty()
+    val isMatching = newPassword.length >= 6 && newPassword == confirmPassword
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(White)
             .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-        Spacer(modifier = Modifier.height(40.dp))
+        // ... (Your existing Image and Text Composables can go here) ...
+        Text("Reset Your Password", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = TextColor)
+        Spacer(modifier = Modifier.height(30.dp))
 
-        Image(
-            painter = painterResource(Res.drawable.reset),
-            contentDescription = "Reset Password Illustration",
-            modifier = Modifier
-                .size(300.dp)
-                .padding(bottom = 16.dp)
-        )
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        Text(
-            "Reset Password",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            color = TextColor
-        )
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        Text(
-            "Now you can reset your old password.",
-            fontSize = 16.sp,
-            color = SecondTextColor,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(40.dp))
-
-        // New Password
-        Text(
-            "Enter your new password",
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.align(Alignment.Start),
-            color = TextColor
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
+        // New Password Field
         OutlinedTextField(
             value = newPassword,
             onValueChange = { newPassword = it },
+            label = { Text("New Password") },
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("**************", color = SecondTextColor) },
-            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-            shape = RoundedCornerShape(14.dp),
-            trailingIcon = {
-                IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(
-                        painter = painterResource(
-                            if (passwordVisible) Res.drawable.password_opened else Res.drawable.password_closed
-                        ),
-                        contentDescription = "Toggle Password",
-                        tint = PrimaryColor,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            },
-            colors = TextFieldDefaults.outlinedTextFieldColors(
-                focusedBorderColor = PrimaryColor,
-                unfocusedBorderColor = SecondTextColor.copy(alpha = 0.5f),
-                cursorColor = PrimaryColor,
-                focusedTextColor = TextColor,
-                unfocusedTextColor = TextColor
-            )
+            visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            // ... (Add your styling and trailing icon) ...
         )
+        Spacer(modifier = Modifier.height(16.dp))
 
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // Confirm Password
-        Text(
-            "Confirm your new password",
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.align(Alignment.Start),
-            color = TextColor
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
+        // Confirm Password Field
         OutlinedTextField(
             value = confirmPassword,
             onValueChange = { confirmPassword = it },
+            label = { Text("Confirm New Password") },
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("**************", color = SecondTextColor) },
-            visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-            shape = RoundedCornerShape(14.dp),
-            trailingIcon = {
-                IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
-                    Icon(
-                        painter = painterResource(
-                            if (confirmPasswordVisible) Res.drawable.password_opened else Res.drawable.password_closed
-                        ),
-                        contentDescription = "Toggle Password",
-                        tint = PrimaryColor,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            },
-            colors = TextFieldDefaults.outlinedTextFieldColors(
-                focusedBorderColor = PrimaryColor,
-                unfocusedBorderColor = SecondTextColor.copy(alpha = 0.5f),
-                cursorColor = PrimaryColor,
-                focusedTextColor = TextColor,
-                unfocusedTextColor = TextColor
-            )
+            visualTransformation = if (isConfirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            // ... (Add your styling and trailing icon) ...
         )
 
         if (!isMatching && confirmPassword.isNotEmpty()) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                "Passwords do not match",
+                if (newPassword.length < 6) "Password must be at least 6 characters" else "Passwords do not match",
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall
             )
@@ -174,19 +102,41 @@ fun ResetPasswordScreenView(navigator: Navigator) {
 
         Button(
             onClick = {
-                // TODO: Implement reset logic
-                navigator.pop() // ou HomeTab si tu veux rediriger ailleurs
+                if (isMatching && !isLoading) {
+                    isLoading = true
+                    errorMessage = null
+                    coroutineScope.launch {
+                        val result = authRepository.confirmPasswordReset(oobCode, newPassword)
+                        if (result.isSuccess) {
+                            // Success! Navigate to the login screen.
+                            navigator.popUntil { it is LoginScreen } // Go back to login
+                        } else {
+                            errorMessage = result.exceptionOrNull()?.message ?: "Failed to reset password."
+                        }
+                        isLoading = false
+                    }
+                }
             },
-            enabled = isMatching,
-            modifier = Modifier.fillMaxWidth(),
+            enabled = isMatching && !isLoading, // Disable button when not matching or loading
+            modifier = Modifier.fillMaxWidth().height(50.dp),
             colors = ButtonDefaults.buttonColors(PrimaryColor),
             shape = RoundedCornerShape(12.dp)
         ) {
+            if (isLoading) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
+            } else {
+                Text("Reset Password", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+
+        // Display error message if any
+        if (errorMessage != null) {
+            Spacer(modifier = Modifier.height(16.dp))
             Text(
-                "Reset Password",
-                color = White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
+                text = errorMessage!!,
+                color = MaterialTheme.colorScheme.error,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }

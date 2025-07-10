@@ -24,6 +24,8 @@ import theme.PrimaryColor
 import theme.TextColor
 import theme.White
 import theme.SecondTextColor
+import data.getAuthRepository //
+import kotlinx.coroutines.launch // Import for coroutine scope
 
 @OptIn(ExperimentalMaterial3Api::class)
 object ForgotPasswordScreen : Screen {
@@ -37,9 +39,16 @@ object ForgotPasswordScreen : Screen {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ForgotPasswordScreenView(navigator: Navigator) {
-    var phoneNumber by remember { mutableStateOf("") }
-    val phonePattern = Regex("^[567]\\d{8}$")
-    val isPhoneNumberValid = phonePattern.matches(phoneNumber)
+    var email by remember { mutableStateOf("") } // Change to email
+    var isLoading by remember { mutableStateOf(false) } // Add loading state
+    var errorMessage by remember { mutableStateOf<String?>(null) } // Add error message state
+    var successMessage by remember { mutableStateOf<String?>(null) } // Add success message state
+
+    val emailPattern = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$") // Email pattern
+    val isEmailValid = emailPattern.matches(email) // Email validation
+    val coroutineScope = rememberCoroutineScope() // Coroutine scope for suspend functions
+    val authRepository = getAuthRepository()
+
 
     Column(
         modifier = Modifier
@@ -84,7 +93,7 @@ fun ForgotPasswordScreenView(navigator: Navigator) {
 
         // Subtitle
         Text(
-            text = "Don't worry! It happens. Please enter the phone number associated with your account.",
+            text = "Don't worry! It happens. Please enter the email associated with your account.", // Change text
             fontSize = 16.sp,
             color = SecondTextColor,
             textAlign = TextAlign.Center,
@@ -93,9 +102,9 @@ fun ForgotPasswordScreenView(navigator: Navigator) {
 
         Spacer(modifier = Modifier.height(40.dp))
 
-        // Phone Number Label
+        // Email Label
         Text(
-            text = "Phone Number",
+            text = "Email", // Change label
             fontSize = 14.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.align(Alignment.Start),
@@ -104,31 +113,22 @@ fun ForgotPasswordScreenView(navigator: Navigator) {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Phone Number Input Field
+        // Email Input Field
         OutlinedTextField(
-            value = phoneNumber,
-            onValueChange = { phoneNumber = it },
+            value = email,
+            onValueChange = { email = it },
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("1712345678", color = SecondTextColor) },
-            leadingIcon = {
-                Text(
-                    text = "+213 ▼",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(start = 10.dp),
-                    color = TextColor
-                )
-            },
+            placeholder = { Text("example@email.com", color = SecondTextColor) }, // Change placeholder
             trailingIcon = {
-                val icon = if (isPhoneNumberValid) Res.drawable.check else Res.drawable.check_before
+                val icon = if (isEmailValid) Res.drawable.check else Res.drawable.check_before // Use email validation
                 Icon(
                     painter = painterResource(icon),
-                    contentDescription = "Phone Validation",
-                    tint = if (isPhoneNumberValid) PrimaryColor else SecondTextColor,
+                    contentDescription = "Email Validation",
+                    tint = if (isEmailValid) PrimaryColor else SecondTextColor,
                     modifier = Modifier.size(24.dp)
                 )
             },
-            isError = !isPhoneNumberValid && phoneNumber.isNotEmpty(),
+            isError = !isEmailValid && email.isNotEmpty(),
             shape = RoundedCornerShape(14.dp),
             colors = TextFieldDefaults.outlinedTextFieldColors(
                 focusedBorderColor = PrimaryColor,
@@ -141,26 +141,64 @@ fun ForgotPasswordScreenView(navigator: Navigator) {
             )
         )
 
+        if (errorMessage != null) { // Display error message
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = errorMessage!!,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.align(Alignment.Start)
+            )
+        }
+
+        if (successMessage != null) { // Display success message
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = successMessage!!,
+                color = PrimaryColor,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.align(Alignment.Start)
+            )
+        }
+
         Spacer(modifier = Modifier.height(30.dp))
 
         // Send Reset Link Button
         Button(
             onClick = {
-                if (isPhoneNumberValid) {
-                    navigator.push(OTPScreen("dummy_otp")) // TODO: Replace with real logic
+                if (isEmailValid && !isLoading) {
+                    isLoading = true
+                    errorMessage = null
+                    successMessage = null
+                    coroutineScope.launch {
+                        val result = authRepository.sendPasswordResetEmail(email)
+                        isLoading = false
+                        if (result.isSuccess) {
+                            successMessage = "Un lien de réinitialisation a été envoyé à votre adresse email."
+                        } else {
+                            errorMessage = result.exceptionOrNull()?.message ?: "Erreur lors de l'envoi du lien de réinitialisation."
+                        }
+                    }
                 }
             },
             modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(PrimaryColor),
             shape = RoundedCornerShape(12.dp),
-            enabled = isPhoneNumberValid
+            enabled = isEmailValid && !isLoading
         ) {
-            Text(
-                text = "Send Reset Link",
-                color = White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
+            if (isLoading) {
+                CircularProgressIndicator(color = White, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Envoi...", color = White)
+            } else {
+                Text(
+                    text = "Send Reset Link",
+                    color = White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     }
 }
+

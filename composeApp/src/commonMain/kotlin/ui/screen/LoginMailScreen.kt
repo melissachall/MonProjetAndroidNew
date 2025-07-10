@@ -27,6 +27,8 @@ import theme.PrimaryColor
 import theme.TextColor
 import theme.White
 import theme.SecondTextColor
+import data.getAuthRepository
+import kotlinx.coroutines.launch // Import for coroutine scope
 
 @OptIn(ExperimentalMaterial3Api::class)
 object LoginScreenMail : Screen {
@@ -43,9 +45,14 @@ fun LoginScreenMailView(navigator: Navigator) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) } // Add loading state
+    var errorMessage by remember { mutableStateOf<String?>(null) } // Add error message state
 
     val emailPattern = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
     val isEmailValid = emailPattern.matches(email)
+    val coroutineScope = rememberCoroutineScope() // Coroutine scope for suspend functions
+    val authRepository = getAuthRepository()
+
 
     Column(
         modifier = Modifier
@@ -167,15 +174,46 @@ fun LoginScreenMailView(navigator: Navigator) {
             )
         )
 
+        if (errorMessage != null) { // Display error message
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = errorMessage!!,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.align(Alignment.Start)
+            )
+        }
+
         Spacer(modifier = Modifier.height(20.dp))
 
         Button(
-            onClick = { navigator.push(HomeTab) },
+            onClick = {
+                if (isEmailValid && password.isNotEmpty() && !isLoading) {
+                    isLoading = true
+                    errorMessage = null
+                    coroutineScope.launch {
+                        val result = authRepository.signInWithEmail(email, password)
+                        isLoading = false
+                        if (result.isSuccess) {
+                            navigator.push(HomeTab) // Rediriger vers l'écran d'accueil
+                        } else {
+                            errorMessage = result.exceptionOrNull()?.message ?: "Erreur de connexion"
+                        }
+                    }
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(PrimaryColor),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(12.dp),
+            enabled = !isLoading // Disable button when loading
         ) {
-            Text("Login", color = White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            if (isLoading) {
+                CircularProgressIndicator(color = White, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Connexion...", color = White)
+            } else {
+                Text("Login", color = White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
         }
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -250,3 +288,4 @@ fun LoginScreenMailView(navigator: Navigator) {
         )
     }
 }
+
