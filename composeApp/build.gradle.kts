@@ -19,20 +19,6 @@ plugins {
 
 kotlin {
     @OptIn(ExperimentalWasmDsl::class)
-    /*wasmJs {
-        moduleName = "composeApp"
-        browser {
-            commonWebpackConfig {
-                outputFileName = "composeApp.js"
-                devServer = (devServer ?: KotlinWebpackConfig.DevServer()).apply {
-                    static = (static ?: mutableListOf()).apply {
-                        add(project.projectDir.path)
-                    }
-                }
-            }
-        }
-        binaries.executable()
-    }*/
 
     androidTarget {
         compilations.all {
@@ -42,19 +28,6 @@ kotlin {
         }
     }
 
-    // Desktop désactivé pour éviter les erreurs
-    // jvm("desktop")
-
-    /*listOf(
-        iosX64(),
-        iosArm64(),
-        iosSimulatorArm64()
-    ).forEach { iosTarget ->
-        iosTarget.binaries.framework {
-            baseName = "ComposeApp"
-            isStatic = true
-        }
-    }*/
 
     sourceSets {
 
@@ -81,15 +54,6 @@ kotlin {
 
         }
 
-        // Desktop désactivé
-        /*
-        val desktopMain by getting
-        desktopMain.dependencies {
-            implementation(compose.desktop.currentOs)
-            runtimeOnly(libs.kotlinx.coroutines.swing)
-            implementation(libs.ktor.client.okhttp)
-        }
-        */
 
         commonTest.dependencies {
             implementation(kotlin("test"))
@@ -104,7 +68,7 @@ kotlin {
             implementation("com.google.firebase:firebase-common")
             implementation("com.google.firebase:firebase-firestore")
             implementation("com.google.firebase:firebase-firestore-ktx")
-            implementation("com.google.android.gms:play-services-auth")
+            implementation("com.google.android.gms:play-services-auth:21.0.0")
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android")
             implementation("androidx.credentials:credentials:1.3.0")
             implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
@@ -122,12 +86,6 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
         }
 
-        // iOS dépendances si besoin
-        /*
-        iosMain.dependencies {
-            implementation(libs.ktor.client.darwin)
-        }
-        */
     }
 }
 
@@ -170,38 +128,17 @@ android {
     }
 }
 
-// Desktop désactivé
-/*
-compose.desktop {
-    application {
-        mainClass = "MainKt"
-
-        nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "com.travel.buddy"
-            packageVersion = "1.0.0"
-        }
-    }
-}
-*/
 
 buildkonfig {
     packageName = "com.travel.buddy"
 
-    val localPropsFile = rootProject.file("local.properties")
-    val localProperties = Properties()
-    if (localPropsFile.exists()) {
-        runCatching {
-            localProperties.load(localPropsFile.inputStream())
-        }.getOrElse {
-            it.printStackTrace()
-        }
-    }
+    val geminiApiKey = project.findProperty("gemini_api_key") as? String ?: ""
+
     defaultConfigs {
         buildConfigField(
-            FieldSpec.Type.STRING,
+            com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING,
             "GEMINI_API_KEY",
-            localProperties["gemini_api_key"]?.toString() ?: ""
+            geminiApiKey
         )
     }
 }

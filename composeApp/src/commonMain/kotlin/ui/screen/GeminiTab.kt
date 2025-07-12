@@ -53,7 +53,7 @@ import ui.component.ShimmerAnimation
 import ui.component.Tabx
 import ui.viewmodel.HomeScreenModel
 import util.BOTTOM_NAV_SPACE
-import di.HomeScreenModelProvider
+import di.HomeScreenModelProviderr
 import data.GeminiApi
 import dev.shreyaspatil.ai.client.generativeai.type.GenerateContentResponse
 import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
@@ -81,7 +81,7 @@ data object GeminiTab : Tabx {
 
     @Composable
     override fun Content() {
-        val screenModel = HomeScreenModelProvider.homeScreenModel
+        val screenModel = HomeScreenModelProviderr.homeScreenModel
         val navigator = LocalNavigator.currentOrThrow
         GeminiScreenView(navigator = navigator, viewModel = screenModel)
     }

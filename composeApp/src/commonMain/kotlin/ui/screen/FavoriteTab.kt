@@ -21,7 +21,7 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.TabOptions
-import di.HomeScreenModelProvider
+import di.HomeScreenModelProviderr
 import model.Destination
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
@@ -66,7 +66,7 @@ data object FavoriteTab : Tabx {
 object FavoriteScreen : Screen {
     @Composable
     override fun Content() {
-        val screenModel = HomeScreenModelProvider.homeScreenModel
+        val screenModel = HomeScreenModelProviderr.homeScreenModel
         val navigator = LocalNavigator.currentOrThrow
         FavoriteScreenView(navigator = navigator, viewModel = screenModel)
     }

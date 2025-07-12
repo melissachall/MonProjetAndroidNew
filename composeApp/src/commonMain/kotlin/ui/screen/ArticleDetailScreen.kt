@@ -22,7 +22,7 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import di.HomeScreenModelProvider
+import di.HomeScreenModelProviderr
 import model.Article
 import theme.Black
 import theme.White
@@ -37,7 +37,7 @@ import util.BOTTOM_NAV_SPACE
 data class ArticleDetailScreen(val article: Article) : Screen {
     @Composable
     override fun Content() {
-        val screenModel = HomeScreenModelProvider.homeScreenModel
+        val screenModel = HomeScreenModelProviderr.homeScreenModel
         val navigator = LocalNavigator.currentOrThrow
         ArticleDetailScreenView(navigator = navigator, article = article, viewModel = screenModel)
     }

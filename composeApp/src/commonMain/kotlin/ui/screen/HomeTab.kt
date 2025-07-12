@@ -8,8 +8,7 @@ import org.jetbrains.compose.resources.DrawableResource
 import travelbuddy.composeapp.generated.resources.*
 import di.HomeScreenModelProviderr
 import ui.viewmodel.HomeScreenModel
-
-import ui.component.Tabx // ← importer Tabx depuis component
+import ui.component.Tabx
 
 @Composable
 expect fun HomeScreenView(viewModel: HomeScreenModel)
@@ -28,7 +27,6 @@ object HomeTab : Tabx {
             icon = painterResource(resource = Res.drawable.home)
         )
 
-    // OBLIGATOIRE car Tabx le demande !
     override fun defaultTitle(): StringResource = Res.string.home_tab
     override fun defaultIcon(): DrawableResource = Res.drawable.home
 }

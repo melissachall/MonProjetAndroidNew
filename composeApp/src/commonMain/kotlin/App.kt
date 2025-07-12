@@ -39,7 +39,7 @@ internal fun App() {
         val viewModel = HomeScreenModelProviderr.homeScreenModel
         val bottomNavBarVisibility by viewModel.bottomNavBarVisible.collectAsState()
 
-        Navigator(LoginScreenMail) { navigator ->
+        Navigator(TabbedScreen) { navigator -> //LoginScreenMail
             val current = navigator.lastItem
             current.Content()
         }

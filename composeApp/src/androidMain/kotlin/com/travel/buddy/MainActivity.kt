@@ -17,7 +17,7 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         const val GOOGLE_SIGN_IN_REQUEST_CODE = 555
-        const val GOOGLE_CLIENT_ID = "465940245644-sb0jk308em524l64igdpdruolbhk11fg.apps.googleusercontent.com" // <= Mets ici ton clientId Firebase
+        const val GOOGLE_CLIENT_ID = "465940245644-sb0jk308em524l64igdpdruolbhk11fg.apps.googleusercontent.com"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

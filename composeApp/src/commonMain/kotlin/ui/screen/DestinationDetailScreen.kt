@@ -1,5 +1,6 @@
 package ui.screen
 
+import GeminiTab
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -56,7 +57,7 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
-import di.HomeScreenModelProvider
+import di.HomeScreenModelProviderr
 import model.Destination
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
@@ -91,7 +92,7 @@ import util.ImageItem
 data class DestinationDetailScreen(val destination: Destination) : Screen {
     @Composable
     override fun Content() {
-        val screenModel = HomeScreenModelProvider.homeScreenModel
+        val screenModel = HomeScreenModelProviderr.homeScreenModel
         val navigator = LocalNavigator.currentOrThrow
         DestinationDetailScreenView(navigator = navigator, destination = destination, viewModel = screenModel)
     }
@@ -361,7 +362,7 @@ fun GeminiRoundButton(
         animationSpec = tween(durationMillis = 300)
     )
 
-    BoxWithConstraints(
+    Box(
         modifier = modifier
             .padding(end = 16.dp, bottom = 36.dp)
             .width(buttonWidth)

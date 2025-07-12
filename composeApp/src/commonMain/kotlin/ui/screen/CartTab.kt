@@ -21,7 +21,7 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.TabOptions
-import di.HomeScreenModelProvider
+import di.HomeScreenModelProviderr
 import model.Destination
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
@@ -36,6 +36,7 @@ import ui.component.LoadItemAfterSafeCast
 import ui.component.Tabx
 import ui.viewmodel.HomeScreenModel
 import util.BOTTOM_NAV_SPACE
+
 
 data object CartTab : Tabx {
     override fun defaultTitle(): StringResource = Res.string.cart_tab
@@ -58,7 +59,7 @@ data object CartTab : Tabx {
 
     @Composable
     override fun Content() {
-        val screenModel = HomeScreenModelProvider.homeScreenModel
+        val screenModel = HomeScreenModelProviderr.homeScreenModel
         val navigator = LocalNavigator.currentOrThrow
         CartScreenView(navigator = navigator, viewModel = screenModel)
     }

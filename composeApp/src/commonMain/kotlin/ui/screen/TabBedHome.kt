@@ -58,8 +58,17 @@ object TabbedHome {
                 },
                 content = { innerPadding ->
                     Box(modifier = Modifier.padding(innerPadding)) {
-                        Crossfade(targetState = selectedTab) { tab: Tabx ->
-                            tab.Content()
+                        Crossfade(targetState = selectedTab) { tab ->
+                            if (tab is Tabx) {
+                                tab.Content()
+                            } else {
+                                // Affiche un message d'erreur si le type est mauvais
+                                Text(
+                                    "Erreur : onglet inattendu (${tab?.javaClass?.simpleName ?: "null"})",
+                                    color = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.padding(32.dp)
+                                )
+                            }
                         }
                     }
                 },
@@ -69,10 +78,13 @@ object TabbedHome {
                         modifier = Modifier.wrapContentSize(Alignment.BottomStart)
                     ) {
                         BottomMenuBar(tabs = tabList) { tab ->
-                            val tabx = tab as Tabx
-                            if (tabx != selectedTab) {
+                            val tabx = tab as? Tabx
+                            if (tabx != null && tabx != selectedTab) {
                                 tabBackStack.add(tabx)
                                 selectedTab = tabx
+                            } else {
+                                // Tu peux logger ou afficher un message si le type est incorrect
+                                println("Erreur : tentative de sélection d'un objet non Tabx : ${tab?.javaClass?.simpleName}")
                             }
                         }
                     }

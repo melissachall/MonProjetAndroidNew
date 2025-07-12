@@ -91,7 +91,7 @@ private fun BottomMenuItem(
                     .width(40.dp)
                     .padding(top = 4.dp)
                     .background(color = PrimaryColor, shape = RoundedCornerShape(22.dp)),
-                thickness = 4.dp,
+                thickness = 2.dp,
                 color = PrimaryColor
             )
         }
@@ -114,7 +114,7 @@ fun BottomMenuBar(
             ),
     ) {
         LazyRow(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp, horizontal = 24.dp),
+            modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp, horizontal = 24.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             items(
