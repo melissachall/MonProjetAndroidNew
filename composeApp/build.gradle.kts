@@ -78,6 +78,7 @@ kotlin {
             api(libs.compose.window.size)
             api(libs.generativeai)
             implementation(libs.filekit.compose)
+
         }
 
         // Desktop désactivé
@@ -103,7 +104,18 @@ kotlin {
             implementation("com.google.firebase:firebase-common")
             implementation("com.google.firebase:firebase-firestore")
             implementation("com.google.firebase:firebase-firestore-ktx")
+            implementation("com.google.android.gms:play-services-auth")
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android")
+            implementation("androidx.credentials:credentials:1.3.0")
+            implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
+            implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
+            implementation("androidx.compose.material3:material3")
+            implementation("androidx.compose.material:material")
+            //implementation("androidx.compose.material:material-pullrefresh:1.6.1")
+            //implementation("cafe.adriel.voyager:voyager-navigator")
+            //implementation("cafe.adriel.voyager:voyager-tab:1.0.0")
 
+            
             implementation(compose.uiTooling)
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)

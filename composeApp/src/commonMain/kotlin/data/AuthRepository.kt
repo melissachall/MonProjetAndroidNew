@@ -1,7 +1,6 @@
 package data
 
 expect class AuthRepository {
-
     suspend fun signInWithEmail(email: String, password: String): Result<Unit>
     suspend fun signUpWithEmail(email: String, password: String): Result<String>
     suspend fun sendPasswordResetEmail(email: String): Result<Unit>
@@ -17,6 +16,9 @@ expect class AuthRepository {
     suspend fun signInWithPhoneAuthCredential(credential: Any): Result<Unit>
     fun signOut()
     fun getCurrentUserEmail(): String?
+
+    // Méthode Google Sign-In attend un idToken !
+    suspend fun signInWithGoogleIdToken(idToken: String): Result<Unit>
 }
 
 expect fun getAuthRepository(): AuthRepository

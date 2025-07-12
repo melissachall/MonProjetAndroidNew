@@ -2,10 +2,7 @@ package data
 
 import android.app.Activity
 import com.google.firebase.FirebaseException
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.PhoneAuthCredential
-import com.google.firebase.auth.PhoneAuthOptions
-import com.google.firebase.auth.PhoneAuthProvider
+import com.google.firebase.auth.*
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import java.util.concurrent.TimeUnit
@@ -52,7 +49,7 @@ actual class AuthRepository {
         val activity = AuthService.getCurrentActivity() as? Activity
             ?: throw IllegalStateException("Activity not set. Call AuthService.setActivity()")
 
-        val options = PhoneAuthOptions.newBuilder(FirebaseAuth.getInstance())
+        val options = PhoneAuthOptions.newBuilder(auth)
             .setPhoneNumber(phoneNumber)
             .setTimeout(60L, TimeUnit.SECONDS)
             .setActivity(activity)
@@ -74,6 +71,13 @@ actual class AuthRepository {
     }
 
     actual fun getCurrentUserEmail(): String? = auth.currentUser?.email
+
+    // Google Sign-In prend le idToken en paramètre !
+    actual suspend fun signInWithGoogleIdToken(idToken: String): Result<Unit> =
+        runCatching {
+            val credential = GoogleAuthProvider.getCredential(idToken, null)
+            auth.signInWithCredential(credential).await()
+        }.map { Unit }
 }
 
 actual fun getAuthRepository(): AuthRepository = AuthRepository()

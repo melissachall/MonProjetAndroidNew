@@ -17,5 +17,6 @@ data class Destination(
     val meetingPoints: List<String>,
     val facilities: List<String>,
     val via: String,
-    val estimation: String
+    val estimation: String,
+    val popularity: Int? = null
 )

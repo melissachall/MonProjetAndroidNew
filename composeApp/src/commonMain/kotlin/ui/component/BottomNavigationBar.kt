@@ -39,7 +39,7 @@ import theme.SecondTextColor
 import ui.screen.CartTab
 import ui.screen.FavoriteTab
 import ui.screen.HomeTab
-import ui.screen.GeminiTab
+import GeminiTab
 import ui.screen.ProfileTab
 
 interface Tabx: Tab {

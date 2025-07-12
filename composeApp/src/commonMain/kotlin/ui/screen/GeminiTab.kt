@@ -1,12 +1,9 @@
-package ui.screen
-
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import cafe.adriel.voyager.navigator.LocalNavigator
@@ -37,24 +34,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.painter.BitmapPainter
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import cafe.adriel.voyager.core.model.rememberScreenModel
-import com.mikepenz.markdown.m3.Markdown
-import com.mikepenz.markdown.m3.markdownColor
-import data.GeminiApi
-import dev.shreyaspatil.ai.client.generativeai.type.GenerateContentResponse
-import di.HomeScreenModelProvider
-import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
-import io.github.vinceglb.filekit.core.PickerType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
@@ -64,16 +43,25 @@ import theme.CodeBackground
 import theme.LinkColor
 import theme.PrimaryColor
 import theme.TextColor
-import toComposeImageBitmap
 import travelbuddy.composeapp.generated.resources.Res
 import travelbuddy.composeapp.generated.resources.chat_bot
 import travelbuddy.composeapp.generated.resources.gemini
 import travelbuddy.composeapp.generated.resources.menu_profile
 import travelbuddy.composeapp.generated.resources.profile_tab
+import ui.app.toComposeImageBitmap
 import ui.component.ShimmerAnimation
 import ui.component.Tabx
 import ui.viewmodel.HomeScreenModel
 import util.BOTTOM_NAV_SPACE
+import di.HomeScreenModelProvider
+import data.GeminiApi
+import dev.shreyaspatil.ai.client.generativeai.type.GenerateContentResponse
+import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
+import io.github.vinceglb.filekit.core.PickerType
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextAlign
 
 data object GeminiTab : Tabx {
     override fun defaultTitle(): StringResource = Res.string.profile_tab
@@ -84,14 +72,11 @@ data object GeminiTab : Tabx {
         get() {
             val title = stringResource(Res.string.profile_tab)
             val icon = painterResource(Res.drawable.menu_profile)
-
-            return remember {
-                TabOptions(
-                    index = 0u,
-                    title = title,
-                    icon = icon
-                )
-            }
+            return TabOptions(
+                index = 0u,
+                title = title,
+                icon = icon
+            )
         }
 
     @Composable
@@ -116,20 +101,22 @@ fun GeminiScreenView(navigator: Navigator, viewModel: HomeScreenModel){
     val navigateToGemini by viewModel.navigateToGemini.collectAsState()
     var prompt by remember { mutableStateOf("") }
     val canClearPrompt by remember { derivedStateOf { prompt.isNotBlank() } }
-    if (navigateToGemini.first && navigateToGemini.second != null) {
-        val customPrompt = """
-                    As a tourist, I want to explore and learn about a destination. Please provide comprehensive information about the following place: ${navigateToGemini.second?.title}.
-                    Include key details such as:
-                    - A brief overview of the place
-                    - Historical or cultural significance
-                    - Popular tourist attractions or landmarks
-                    - Best time to visit
-                    - Available activities
-                    - Images of the destination
-                    - Navigation routes or how to reach there from common locations
-                    Make the information engaging and easy to understand.
-                """.trimIndent()
-        coroutineScope.launch {
+
+    // Utiliser LaunchedEffect pour la génération automatique quand navigateToGemini change
+    LaunchedEffect(navigateToGemini) {
+        if (navigateToGemini.first && navigateToGemini.second != null) {
+            val customPrompt = """
+                As a tourist, I want to explore and learn about a destination. Please provide comprehensive information about the following place: ${navigateToGemini.second?.title}.
+                Include key details such as:
+                - A brief overview of the place
+                - Historical or cultural significance
+                - Popular tourist attractions or landmarks
+                - Best time to visit
+                - Available activities
+                - Images of the destination
+                - Navigation routes or how to reach there from common locations
+                Make the information engaging and easy to understand.
+            """.trimIndent()
             println("prompt = $customPrompt")
             content = ""
             generateContentAsFlow(api, customPrompt, selectedImageData)
@@ -285,10 +272,10 @@ fun GeminiScreenView(navigator: Navigator, viewModel: HomeScreenModel){
                 }
             } else {
                 SelectionContainer {
-                    Markdown(
+                    com.mikepenz.markdown.m3.Markdown(
                         modifier = Modifier.fillMaxSize(),
                         content = content,
-                        colors = markdownColor(
+                        colors = com.mikepenz.markdown.m3.markdownColor(
                             text = TextColor,
                             inlineCodeText = PrimaryColor,
                             dividerColor = BorderColor,

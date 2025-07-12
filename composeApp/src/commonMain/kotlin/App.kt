@@ -1,14 +1,25 @@
+package ui.app
+
+import GeminiTab
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
-import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
-import cafe.adriel.voyager.navigator.currentOrThrow
-import cafe.adriel.voyager.navigator.tab.CurrentTab
 import cafe.adriel.voyager.navigator.tab.TabNavigator
+import theme.TravelAppTheme
+import ui.screen.CartTab
+import ui.screen.FavoriteTab
+import ui.screen.HomeTab
+import ui.screen.ProfileTab
+import ui.screen.LoginScreenMail
+import ui.component.BottomMenuBar
+import ui.component.tabs
+import util.AnimateVisibility
+import di.HomeScreenModelProviderr
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.compose.setSingletonImageLoaderFactory
@@ -17,83 +28,64 @@ import coil3.memory.MemoryCache
 import coil3.request.CachePolicy
 import coil3.request.crossfade
 import coil3.util.DebugLogger
-import di.HomeScreenModelProvider
 import okio.FileSystem
-import theme.TravelAppTheme
-import ui.component.BottomMenuBar
-import ui.component.tabs
-import ui.screen.CartTab
-import ui.screen.FavoriteTab
-import ui.screen.HomeTab
-import ui.screen.GeminiTab
-import ui.screen.LoginScreen
-import ui.screen.ProfileTab
-import util.AnimateVisibility
+import cafe.adriel.voyager.core.screen.Screen
 
-/*@Composable
+@Composable
 internal fun App() {
     TravelAppTheme {
+        setSingletonImageLoaderFactory { context -> getAsyncImageLoader(context) }
 
-        setSingletonImageLoaderFactory { context ->
-            getAsyncImageLoader(context)
-        }
-
-        val viewModel = HomeScreenModelProvider.homeScreenModel
-
+        val viewModel = HomeScreenModelProviderr.homeScreenModel
         val bottomNavBarVisibility by viewModel.bottomNavBarVisible.collectAsState()
 
-        Navigator(LoginScreen) { navigator ->
-            val currentScreen = navigator.lastItem
+        Navigator(LoginScreenMail) { navigator ->
+            val current = navigator.lastItem
+            current.Content()
+        }
+    }
+}
 
+// Définir TabbedScreen ici (pas besoin de fichier séparé)
+object TabbedScreen : Screen {
+    @Composable
+    override fun Content() {
+        val viewModel = di.HomeScreenModelProviderr.homeScreenModel
+        val bottomNavBarVisibility by viewModel.bottomNavBarVisible.collectAsState()
+        TabNavigator(HomeTab) { tabNavigator ->
             Scaffold(
-                content = { padding ->
-                    currentScreen.Content()
+                content = { innerPadding ->
+                    Box(modifier = Modifier.padding(innerPadding)) {
+                        tabNavigator.current.Content()
+                    }
                 },
                 bottomBar = {
-                    val viewModel = HomeScreenModelProvider.homeScreenModel
-                    val bottomNavBarVisibility by viewModel.bottomNavBarVisible.collectAsState()
-
                     AnimateVisibility(
                         visible = bottomNavBarVisibility,
                         modifier = Modifier.wrapContentSize(Alignment.BottomStart)
                     ) {
                         BottomMenuBar(tabs = tabs) { selectedTab ->
-                            when (selectedTab) {
-                                HomeTab -> navigator.push(HomeTab)
-                                FavoriteTab -> navigator.push(FavoriteTab)
-                                CartTab -> navigator.push(CartTab)
-                                GeminiTab -> navigator.push(GeminiTab)
-                                ProfileTab -> navigator.push(ProfileTab)
-                            }
+                            tabNavigator.current = selectedTab
                         }
                     }
                 }
             )
         }
     }
-}*/
-
-@Composable
-internal fun App() {
-    TravelAppTheme {
-
-        setSingletonImageLoaderFactory { context ->
-            getAsyncImageLoader(context)
-        }
-
-        Navigator(LoginScreen) { navigator ->
-            Scaffold(
-                content = {
-                    navigator.lastItem.Content()
-                }
-            )
-        }
-    }
 }
 
+val tabs = listOf(
+    HomeTab,
+    FavoriteTab,
+    CartTab,
+    GeminiTab,
+    ProfileTab
+)
 
+@Composable
+expect fun openUrl(url: String?)
 
-internal expect fun openUrl(url: String?)
+expect fun ByteArray.toComposeImageBitmap(): androidx.compose.ui.graphics.ImageBitmap
 
 fun getAsyncImageLoader(context: PlatformContext) =
     ImageLoader.Builder(context)
@@ -119,5 +111,3 @@ fun newDiskCache(): DiskCache {
         .maxSizeBytes(1024L * 1024 * 1024) // 1GB
         .build()
 }
-
-expect fun ByteArray.toComposeImageBitmap(): ImageBitmap
