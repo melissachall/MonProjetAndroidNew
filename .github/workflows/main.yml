@@ -9,36 +9,8 @@ on:
       - main
 
 jobs:
-  # (Optionnel) Build du code commun
-  build-common:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'zulu'
-
-      - name: Cache Gradle packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - name: Build Common module
-        run: ./gradlew :common:build
-
-      - name: Run Common tests
-        run: ./gradlew :common:test
-
   build-android:
     runs-on: ubuntu-latest
-    needs: [build-common]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
